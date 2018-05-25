@@ -2,8 +2,8 @@ module BlocRecord
   module Utility
     extend self
 
-    def underscore(CamelCase)
-      string = CamelCase.gsub(/::/,'/')
+    def underscore(camel_case)
+      string = camel_case.gsub(/::/,'/')
       string.gsub!(/([A-Z]+)([A-Z][a-z])/,'\1_\2')
       string.gsub!(/([a-z\d])([A-Z])/,'\1_\2')
       string.tr!("-", "_")

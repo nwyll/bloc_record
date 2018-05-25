@@ -7,7 +7,7 @@ module Persistence
   end
 
   def save
-    self.save! rescue false 
+    self.save! rescue false
   end
 
   def save!
