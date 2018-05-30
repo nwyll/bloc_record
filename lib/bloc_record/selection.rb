@@ -2,6 +2,9 @@ require 'sqlite3'
 
 module Selection
   def find(*ids)
+    # check that ids are numbers > 0
+    raise raise ArgumentError, 'Ids given must be values greater than zero.' unless ids.all? { |id| id.is_a? Integer && id > 0 }
+
     if ids.length == 1
       find_one(ids.first)
     else
@@ -15,6 +18,9 @@ module Selection
   end
 
   def find_one(id)
+    #checking that id is a num > 0
+    raise ArgumentError, 'Id given must be a value greater than zero.' unless (id.is_a? Integer && x > 0)
+
     row = connection.get_first_row <<-SQL
       SELECT #{columns.join ","} FROM #{table}
       WHERE id = #{id};
@@ -24,6 +30,9 @@ module Selection
   end
 
   def find_by(attribute, value)
+    #raise error if the given attribute is not listed in the table schema
+    raise "#{attribute} is not part of #{table}" unless columns.include?(attribute)
+
     rows = connection.execute <<-SQL
       SELECT #{columns.join ","} FROM #{table}
       WHERE #{attribute} = #{BlocRecord::Utility.sql_strings(value)};
@@ -32,7 +41,59 @@ module Selection
     rows_to_array(rows)
   end
 
+  def find_each(start=nil, batch_size=100)
+    #start and batch_size should be integers > 0
+    raise ArgumentError, 'Value given must be greater than zero.' unless (start.is_a? Integer && x > 0)
+    raise ArgumentError, 'Value given must be greater than zero.' unless (batch_size.is_a? Integer && x > 0)
+
+    if block_given?
+      find_in_batches(start: start, batch_size: batch_size) do |records|
+        records.each { |record| yield record }
+      end
+    end
+  end
+
+  def find_in_batches(start=nil, batch_size=100)
+    #start and batch_size should be integers > 0
+    raise ArgumentError, 'Value given must be greater than zero.' unless (start.is_a? Integer && x > 0)
+    raise ArgumentError, 'Value given must be greater than zero.' unless (batch_size.is_a? Integer && x > 0)
+
+    #SQL - retrieve first batch, order ASC, offset to start value, limit to batch_size
+    rows = connection.execute <<-SQL
+      SELECT #{columns.join ","} FROM #{table}
+      WHERE id >= #{start}
+      ORDER BY id
+      LIMIT #{batch_size};
+    SQL
+
+    #all records
+    records = rows_to_array(rows)
+
+    #loop through all records & yeild to block
+    while records.any?
+      yield records
+
+      break if records.size < batch_size
+
+      last_value = records.last.id
+      raise "You must include the primary key." unless last_value.present?
+
+      #get next batch, starting at last value of previous batch
+      rows = connection.execute <<-SQL
+        SELECT #{columns.join ","} FROM #{table}
+        WHERE id > #{last_value}
+        ORDER BY id
+        LIMIT #{batch_size};
+      SQL
+
+      records = rows_to_array(rows)
+    end
+  end
+
   def take(num=1)
+    #check that num in an integer > 0
+    raise ArgumentError, 'Value given must be a number greater than zero.' unless (id.is_a? Integer && x > 0)
+
     if num > 1
       rows = connection.execute <<-SQL
         SELECT #{columns.join ","} FROM #{table}
@@ -83,7 +144,10 @@ module Selection
   end
 
   def method_missing(m, *args)
-    
+    name_arr = m.id2name.split("_")
+    attribute = name_arr.last
+
+    find_by(attribute, *args)
   end
 
   private

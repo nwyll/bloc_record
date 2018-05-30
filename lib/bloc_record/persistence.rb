@@ -32,7 +32,14 @@ module Persistence
     def create(attrs)
       attrs = BlocRecord::Utility.convert_keys(attrs)
       attrs.delete "id"
-      vals = attributes.map { |key| BlocRecord::Utility.sql_strings(attrs[key]) }
+      # vals = attributes.map { |key| BlocRecord::Utility.sql_strings(attrs[key]) }
+
+      vals = attributes.each do |key|
+        puts "Key: #{key}"
+        puts "Value: #{attrs[key]}"
+        key = BlocRecord::Utility.sql_strings(attrs[key])
+      end
+
 
       connection.execute <<-SQL
         INSERT INTO #{table} (#{attributes.join ","})
