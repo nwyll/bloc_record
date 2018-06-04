@@ -173,12 +173,10 @@ module Selection
     rows_to_array(rows)
   end
 
+  # Supports ordering by ASC or DESC, ordering by multiple conditions, string or symbol
   def order(*args)
-    if args.count > 1
-      order = args.join(",")
-    else
-      order = args.first.to_s
-    end
+    args.map!{ |arg| arg.is_a?(Hash) ? arg.map{ |k,v| "#{k} #{v.upcase}"} : arg }
+    order = args.flatten(2).join(", ")
 
     rows = connection.execute <<-SQL
       SELECT * FROM #{table}
@@ -205,9 +203,19 @@ module Selection
           SELECT * FROM #{table}
           INNER JOIN #{args.first} ON #{args.first}.#{table}_id = #{table}.id
         SQL
+      when Hash
+        associations = args.first.flatten
+
+        rows = connection.execute <<-SQL
+          SELECT * FROM #{table}
+          INNER JOIN #{associations.first} ON #{associations.first}.#{table}_id = #{table}.id
+          INNER JOIN #{associations.last} ON #{associations.last}.#{associations.first}_id = #{associations.first}.id
+        SQL
+      else
+        "Please enter valid JOINS syntax."
       end
     end
-    
+
     rows_to_array(rows)
   end
 
