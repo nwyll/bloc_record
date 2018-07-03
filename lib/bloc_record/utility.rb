@@ -27,6 +27,7 @@ module BlocRecord
 
     def convert_keys(options)
       options.keys.each {|key| options[key.to_s] = options.delete(key) if key.kind_of?(Symbol)}
+      options
     end
 
     def instance_variables_to_hash(obj)

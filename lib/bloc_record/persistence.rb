@@ -48,14 +48,14 @@ module Persistence
       SQL
 
       data = Hash[attributes.zip attrs.values]
-      data["id"] = connection.execute("SELECT insert_rowid();")[0][0]
+      data["id"] = connection.execute("SELECT last_insert_rowid();")[0][0]
       new(data)
     end
 
     def update(ids, updates)
       updates = BlocRecord::Utility.convert_keys(updates)
       updates.delete "id"
-      updates_array = updates.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(vlaue)}" }
+      updates_array = updates.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}" }
 
       if ids.class == Fixnum
         where_clause = "WHERE id = #{ids}"
@@ -63,7 +63,7 @@ module Persistence
         where_clause = ids.empty? ? ";" : "WHERE id IN (#{ids.join(",")});"
       else
         where_clause = ";"
-      end 
+      end
 
       connection.execute <<-SQL
         UPDATE #{table}
