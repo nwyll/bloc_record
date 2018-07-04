@@ -26,5 +26,9 @@ module BlocRecord
     def not(arg)
       self - where(arg)
     end
+
+    def destroy_all
+      self.first.class.destroy_all
+    end
   end
 end
