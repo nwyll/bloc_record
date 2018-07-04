@@ -119,7 +119,7 @@ module Selection
 
   def first
     row = connection.get_first_row <<-SQL
-      SELECT #{columns.join ","} FROM #{table}
+      SELECT #{columns.join(",")} FROM #{table}
       ORDER BY id ASC LIMIT 1;
     SQL
 
@@ -220,7 +220,7 @@ module Selection
   end
 
   private
-  def init_object_from_row
+  def init_object_from_row(row)
     if row
       data = Hash[columns.zip(row)]
       new(data)
@@ -230,6 +230,6 @@ module Selection
   def rows_to_array(rows)
     collection = BlocRecord::Collection.new
     rows.each { |row| collection << new(Hash[columns.zip(row)]) }
-    collection 
+    collection
   end
 end

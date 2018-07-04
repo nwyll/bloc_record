@@ -52,14 +52,19 @@ module Persistence
       SQL
 
       data = Hash[attributes.zip attrs.values]
-      data["id"] = connection.execute("SELECT insert_rowid();")[0][0]
+      data["id"] = connection.execute("SELECT last_insert_rowid();")[0][0]
       new(data)
     end
 
     def update(ids, updates)
       updates = BlocRecord::Utility.convert_keys(updates)
       updates.delete "id"
-      updates_array = updates.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(vlaue)}" }
+
+      if updates.size > 1
+        updates_array = updates.map { |hash| hash.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}" }}
+      else
+        updates_array = updates.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}" }
+      end
 
       if ids.class == Fixnum
         where_clause = "WHERE id = #{ids}"
